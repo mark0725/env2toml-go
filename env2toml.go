@@ -3,6 +3,7 @@ package env2toml
 import (
 	"fmt"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -81,16 +82,6 @@ func Parse(prefix string) (string, error) {
 		}
 	}
 
-	// // gen toml text
-	// for _, sec := range sections {
-	// 	result.WriteString(fmt.Sprintf("\n[%s]\n", sec))
-	// 	for _, item := range varList {
-	// 		if item.Section != nil && *item.Section == sec {
-	// 			result.WriteString(fmt.Sprintf("%s=%s\n", item.Key, item.Value))
-	// 		}
-	// 	}
-	// }
-
 	// Generate TOML text for sections
 	for _, sec := range sections {
 		arrayItems := make(map[int][]VarItem)
@@ -106,6 +97,7 @@ func Parse(prefix string) (string, error) {
 				}
 			}
 		}
+
 		if !isArray {
 			result.WriteString(fmt.Sprintf("\n[%s]\n", sec))
 			for _, item := range arrayItems[0] {
@@ -114,8 +106,14 @@ func Parse(prefix string) (string, error) {
 
 			continue
 		}
-		// Process array items
-		for _, items := range arrayItems {
+
+		keys := make([]int, 0, len(arrayItems))
+		for key := range arrayItems {
+			keys = append(keys, key)
+		}
+		sort.Ints(keys)
+		for _, k := range keys {
+			items := arrayItems[k]
 			result.WriteString(fmt.Sprintf("\n[[%s]]\n", sec))
 			for _, item := range items {
 				result.WriteString(fmt.Sprintf("%s=%s\n", item.Key, item.Value))
