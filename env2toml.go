@@ -11,7 +11,7 @@ import (
 )
 
 type VarItem struct {
-	Section    *string
+	Section    string
 	Array      bool
 	ArrayIndex int
 	Key        string
@@ -59,12 +59,8 @@ func Parse(prefix string) (string, error) {
 				value = fmt.Sprintf(`"%s"`, strings.ReplaceAll(v, `\`, `\\`))
 			}
 
-			var secPtr *string
-			if section != "" {
-				secPtr = &section
-			}
 			varList = append(varList, VarItem{
-				Section:    secPtr,
+				Section:    section,
 				Array:      isArray,
 				ArrayIndex: arrayIndex,
 				Key:        newKey,
@@ -77,7 +73,7 @@ func Parse(prefix string) (string, error) {
 
 	// is a section
 	for _, item := range varList {
-		if item.Section == nil {
+		if item.Section == "" {
 			result.WriteString(fmt.Sprintf("%s=%s\n", item.Key, item.Value))
 		}
 	}
@@ -88,7 +84,7 @@ func Parse(prefix string) (string, error) {
 		isArray := false
 
 		for _, item := range varList {
-			if item.Section != nil && *item.Section == sec {
+			if item.Section == sec {
 				if item.Array {
 					isArray = true
 					arrayItems[item.ArrayIndex] = append(arrayItems[item.ArrayIndex], item)
