@@ -19,30 +19,42 @@ APP_SERVERS__ALPHA__IP=10.0.0.1
 APP_SERVERS__ALPHA__ROLE=frontend
 APP_SERVERS__BETA__IP=10.0.0.2
 APP_SERVERS__BETA__ROLE=backend
+APP_USERS__0__NAME=USER0
+APP_USERS__0__PASSWORD=u0
+APP_USERS__1__NAME=USER1
+APP_USERS__1__PASSWORD=u1
 ```    
 
 PRIFIX: APP_
 
 RESULT：
 ```toml
-title="TOML Example" 
+title="TOML Example"
 
 [owner]
-name="Tom Preston-Werner" 
+name="Tom Preston-Werner"
 
 [database]
-enabled=true 
-ports=[ 8000, 8001, 8002 ] 
+enabled=true
+ports=[ 8000, 8001, 8002 ]
 
 [servers]
 
 [servers.alpha]
-ip="10.0.0.1" 
-role="frontend" 
+ip="10.0.0.1"
+role="frontend"
 
 [servers.beta]
-ip="10.0.0.2" 
-role="backend" 
+ip="10.0.0.2"
+role="backend"
+
+[[users]]
+name="USER0"
+password="u0"
+
+[[users]]
+name="USER1"
+password="u1"
 ```   
 
 ## Usage

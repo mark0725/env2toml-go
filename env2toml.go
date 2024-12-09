@@ -2,17 +2,23 @@ package env2toml
 
 import (
 	"fmt"
-	"github.com/BurntSushi/toml"
 	"os"
+	"strconv"
 	"strings"
+
+	"github.com/BurntSushi/toml"
 )
 
+type VarItem struct {
+	Section    *string
+	Array      bool
+	ArrayIndex int
+	Key        string
+	Value      string
+}
+
 func Parse(prefix string) (string, error) {
-	var varList []struct {
-		Section *string
-		Key     string
-		Value   string
-	}
+	var varList []VarItem
 	var sections []string
 
 	// parse Environ
@@ -23,8 +29,16 @@ func Parse(prefix string) (string, error) {
 			s := strings.ToLower(strings.TrimPrefix(k, prefix))
 			keys := strings.Split(s, "__")
 			var section string
+			isArray := false
+			arrayIndex := -1
 
 			for i := 0; i < len(keys)-1; i++ {
+				if index, err := strconv.Atoi(keys[i]); err == nil {
+					isArray = true
+					arrayIndex = index
+					continue
+				}
+
 				if section != "" {
 					section = section + "." + keys[i]
 				} else {
@@ -48,11 +62,13 @@ func Parse(prefix string) (string, error) {
 			if section != "" {
 				secPtr = &section
 			}
-			varList = append(varList, struct {
-				Section *string
-				Key     string
-				Value   string
-			}{secPtr, newKey, value})
+			varList = append(varList, VarItem{
+				Section:    secPtr,
+				Array:      isArray,
+				ArrayIndex: arrayIndex,
+				Key:        newKey,
+				Value:      value,
+			})
 		}
 	}
 
@@ -65,11 +81,43 @@ func Parse(prefix string) (string, error) {
 		}
 	}
 
-	// gen toml text
+	// // gen toml text
+	// for _, sec := range sections {
+	// 	result.WriteString(fmt.Sprintf("\n[%s]\n", sec))
+	// 	for _, item := range varList {
+	// 		if item.Section != nil && *item.Section == sec {
+	// 			result.WriteString(fmt.Sprintf("%s=%s\n", item.Key, item.Value))
+	// 		}
+	// 	}
+	// }
+
+	// Generate TOML text for sections
 	for _, sec := range sections {
-		result.WriteString(fmt.Sprintf("\n[%s]\n", sec))
+		arrayItems := make(map[int][]VarItem)
+		isArray := false
+
 		for _, item := range varList {
 			if item.Section != nil && *item.Section == sec {
+				if item.Array {
+					isArray = true
+					arrayItems[item.ArrayIndex] = append(arrayItems[item.ArrayIndex], item)
+				} else {
+					arrayItems[0] = append(arrayItems[0], item)
+				}
+			}
+		}
+		if !isArray {
+			result.WriteString(fmt.Sprintf("\n[%s]\n", sec))
+			for _, item := range arrayItems[0] {
+				result.WriteString(fmt.Sprintf("%s=%s\n", item.Key, item.Value))
+			}
+
+			continue
+		}
+		// Process array items
+		for _, items := range arrayItems {
+			result.WriteString(fmt.Sprintf("\n[[%s]]\n", sec))
+			for _, item := range items {
 				result.WriteString(fmt.Sprintf("%s=%s\n", item.Key, item.Value))
 			}
 		}
